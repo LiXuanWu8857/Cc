@@ -1,0 +1,23 @@
+# FoodTrack — local Supabase config (dev/test only).
+project_id = "foodtrack"
+
+[db]
+port = 54322
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[auth]
+enabled = true
+# Users are identified only by the verified JWT (auth.uid()). Never trust a
+# user_id supplied in a request body. See 01_SECURITY_ARCHITECTURE.md §4.5.
+site_url = "http://localhost:3000"
+
+[storage]
+enabled = true
+# Health-related images (food scans, receipts) live in a PRIVATE bucket only.
+# Object paths are server-generated; users never specify a storage path. §4.8.
+
+[test]
+# pgTAP-based RLS / authorization tests. Run: `supabase test db`.
