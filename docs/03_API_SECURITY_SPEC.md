@@ -111,7 +111,57 @@ Phase 2 的寫入為 upsert（profile）或天然單筆 append（body_metric）/
 
 ---
 
+## Phase 3 — 食品與餐點
+
+### `GET /api/foods?q=`
+- **Actor**：`USER`。**Request**：query `q`（字串；空則回 `[]`）。
+- **Authorization**：RLS `foods_select_visible`（官方 + 本人）；名稱 `ilike`（參數化，非字串拼接；並移除 `%`/`_` wildcard），上限 25 筆。
+- **Response 200**：`{ "foods": [ { id, name, brand, is_official, default_serving_g, food_nutrition:{...} } ] }`。
+
+### `POST /api/foods`
+- **Actor**：`USER`。**Request（`createFoodSchema`, strict）**：
+  ```json
+  { "name": "1..200", "brand?": "...", "defaultServingG?": "num",
+    "barcode?": "8..14 digits",
+    "nutritionPer100g": { "caloriesKcal":0..1000, "proteinG":0..100,
+      "fatG":0..100, "carbsG":0..100, "fiberG?":.., "sugarG?":.., "sodiumMg?":.. } }
+  ```
+- **Validation**：schema 邊界 + `validateNutritionPer100g`（熱量 vs 巨量營養素交叉檢查）；不符回 422 要求修正（§4.11，不靜默寫入）。
+- **語意**：僅能建立**私有**食品（`owner = session user`, `is_official = false`）；經 `create_user_food` RPC 原子建立 food + nutrition + 選填 barcode。
+- **Response 201**：`{ "id": "uuid" }`。**Audit**：`food.create`。**Rate**：write。
+
+### `GET /api/foods/barcode/:barcode`
+- **Actor**：`USER`。**Request**：path `barcode`（8–14 位數，否則 422）。
+- **Authorization**：RLS 限官方 + 本人；查無 → 404（絕不回他人資料）。
+- **Response 200**：`{ "match": { barcode, foods:{ ... , food_nutrition:{...} } } }`。
+
+### `POST /api/meals`
+- **Actor**：`USER`。**Request（`createMealSchema`, strict）**：`{ mealType, consumedOn?, note? }`。
+- **Response 201**：`{ "id": "uuid" }`。**Audit**：`meal.create`。**Rate**：write。
+
+### `GET /api/meals?date=YYYY-MM-DD`
+- **Actor**：`USER`。預設今日。RLS 限本人；回該日 meals 及其 items。
+- **Response 200**：`{ "meals": [ { id, meal_type, consumed_on, note, meal_items:[...] } ] }`。
+
+### `POST /api/meal-items`
+- **Actor**：`USER`。**Request（`addMealItemSchema`, strict）**：`{ mealId, foodId, quantityG, servingLabel? }`。
+  **不接受** 熱量/巨量營養素 —— 後端從 `food_nutrition` 讀取並依 `quantityG` 換算。
+- **Authorization**：先確認 meal 屬本人（RLS-scoped 讀，否則 404）；food 須本人可見；RLS `WITH CHECK` 二次確認 meal 歸屬。
+- **語意**：寫入**營養快照**（§2.2），日後食品變更不改寫。
+- **Response 201**：`{ "item": { id, calories_kcal, protein_g, fat_g, carbs_g } }`。**Audit**：`meal_item.create`。
+
+### `DELETE /api/meal-items/:id`
+- **Actor**：`USER`。RLS 限本人；影響 0 列 → 404（不揭露是否存在）。
+- **Response 200**：`{ "ok": true }`。**Audit**：`meal_item.delete`。
+
+### `GET /api/dashboard?date=YYYY-MM-DD`
+- **Actor**：`USER`。預設今日。
+- **語意**：由 `meal_items` **快照**加總（不從 foods 重算），對照 active target 算進度。
+- **Response 200**：`{ date, totals, perMeal:{breakfast,lunch,dinner,snack}, target, progress:{caloriesPct,...}, spending:null } }`（spending 待 Phase 4）。
+
+---
+
 ## 待補（後續階段）
 
 - API 整合測試：未登入、過期 session、偽造 role/id、重放、跨帳號存取。
-- Phase 3+：foods / meals / expenses / scan endpoints，皆須補齊本文件對應章節與越權測試。
+- Phase 4+：expenses / food_purchases / scan endpoints，皆須補齊本文件對應章節與越權測試。

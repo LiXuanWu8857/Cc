@@ -4,15 +4,20 @@
 
 > 核心 Loop：`掃條碼／拍營養標示 → 選份量 → 加入某一餐 → 熱量更新 → 支出完成`
 
-## 目前狀態：Phase 2（Auth + 個人資料基線）
+## 目前狀態：Phase 3（核心 Loop：食品 → 餐點 → Dashboard）
 
-已完成的後端地基：
+已完成的後端：
 
-- **DB schema + RLS**（`supabase/migrations/`）：`user_profiles`、`body_metrics`、`nutrition_targets`、`audit_logs`，每張個人表都有完整 RLS 與 `WITH CHECK`。
-- **越權測試**（`supabase/tests/`）：pgTAP 證明 User A／User B 租戶隔離。
+- **DB schema + RLS**（`supabase/migrations/`）：
+  - Phase 2：`user_profiles`、`body_metrics`、`nutrition_targets`、`audit_logs`。
+  - Phase 3：`foods` / `food_nutrition` / `food_barcodes`（官方＝全員可讀、受控寫入；使用者食品私有）、`meals`、`meal_items`（營養快照）。
+  - 每張表都有完整 RLS 與 `WITH CHECK`。
+- **越權測試**（`supabase/tests/`）：pgTAP 兩組，證明個人表與食品/餐點的 User A／User B 隔離、官方庫寫入防護。
 - **安全 API 管線**（`src/lib/api/`）：固定順序 `RateLimit → Auth → Validation → Authorization → Logic → DB+RLS → Audit → Minimal Response`。
-- **個人資料 API**：`/api/profile`、`/api/body-metrics`、`/api/nutrition-targets`。
-- **後端固定營養計算**（`src/lib/nutrition/`）：BMR/TDEE/巨量營養素，含單元測試。
+- **API**：
+  - 個人：`/api/profile`、`/api/body-metrics`、`/api/nutrition-targets`。
+  - 食品/餐點：`/api/foods`（搜尋/建立）、`/api/foods/barcode/[barcode]`、`/api/meals`、`/api/meal-items`（含 `[id]` 刪除）、`/api/dashboard`。
+- **後端固定營養計算**（`src/lib/nutrition/`）：BMR/TDEE/巨量營養素、營養驗證（熱量交叉檢查）與 serving 換算，含單元測試（14 passing）。
 
 ## 規格文件（先 spec 再 code）
 
@@ -59,6 +64,6 @@ npm run dev
 
 ## Roadmap
 
-- **Phase 3**：foods / barcodes / meals / meal_items（營養快照）+ Dashboard API。
-- **Phase 4**：expenses / food_purchases 與成本分析。
+- **Phase 3（完成）**：foods / barcodes / meals / meal_items（營養快照）+ Dashboard API。
+- **Phase 4**：expenses / food_purchases 與成本分析（每 100 kcal 成本、每 10g 蛋白質成本）。
 - **Phase 5**：Private Storage 上傳 → OCR → AI parser → 候選驗證 → 使用者確認，含 Cost Guard 與審核流程。

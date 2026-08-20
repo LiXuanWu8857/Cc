@@ -86,10 +86,11 @@ Request → Rate Limit → Authentication → Schema Validation
 | 1 | 偽造 `user_id` 建立／改寫 | 身分自 session + RLS `WITH CHECK` | `0001_rls_personal_tables.test.sql`：A 無法 insert B 的 row |
 | 2 | IDOR 讀他人資料 | RLS `SELECT` policy | 同上：A 查不到 B 的 body_metrics |
 | 3 | IDOR 改／刪他人資料 | RLS `UPDATE/DELETE` policy | 同上：A 的 update/delete 影響 0 列 |
-| 9 | Mass assignment | zod `.strict()` 白名單 | （API 整合測試，Phase 2 後續補） |
-| 20 | 營養計算操弄 | 後端固定函式重算，client 不傳衍生值 | `calc.test.ts` |
+| 9 | Mass assignment | zod `.strict()` 白名單 | （API 整合測試，後續補） |
+| 19 | AI/使用者食品污染官方庫 | official 食品 RLS 禁一般使用者寫；候選為私有 user food | `0002_rls_foods_meals.test.sql`：A 無法建立 official／他人食品 |
+| 20 | 營養單位/計算操弄 | 後端固定函式重算與換算，client 不傳衍生值；熱量交叉驗證 | `calc.test.ts`、`validate.test.ts` |
 
-待後續階段涵蓋：#4–8、#10–19、#21–25（Auth 強化、Storage、OCR/AI、Cost Guard 等）。
+待後續階段涵蓋：#4–8、#10–18、#21–25（Auth 強化、Storage、OCR/AI、Cost Guard 等）。
 
 ## 7. Security Testing（§4.15 / 交接指示 4）
 

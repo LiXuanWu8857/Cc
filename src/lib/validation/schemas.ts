@@ -75,3 +75,65 @@ export const recomputeTargetsSchema = z
   })
   .strict();
 export type RecomputeTargetsInput = z.infer<typeof recomputeTargetsSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 3 — foods & meals
+// ---------------------------------------------------------------------------
+
+export const mealType = z.enum(["breakfast", "lunch", "dinner", "snack"]);
+const barcode = z.string().regex(/^[0-9]{8,14}$/, "Barcode must be 8-14 digits");
+
+/** Per-100g nutrition supplied by the user for a manual food. Hard bounds
+ *  here mirror the DB and the validate.ts checks; the calorie/macro
+ *  cross-check runs in the route. */
+const nutritionPer100g = z
+  .object({
+    caloriesKcal: z.number().min(0).max(1000),
+    proteinG: z.number().min(0).max(100),
+    fatG: z.number().min(0).max(100),
+    carbsG: z.number().min(0).max(100),
+    fiberG: z.number().min(0).max(100).optional(),
+    sugarG: z.number().min(0).max(100).optional(),
+    sodiumMg: z.number().min(0).max(100000).optional(),
+  })
+  .strict();
+
+/** Create a private, user-owned food. Cannot create official foods, and
+ *  never accepts owner_user_id / is_official — the backend sets those. */
+export const createFoodSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    brand: z.string().trim().max(120).optional(),
+    defaultServingG: z.number().positive().max(10000).optional(),
+    barcode: barcode.optional(),
+    nutritionPer100g,
+  })
+  .strict();
+export type CreateFoodInput = z.infer<typeof createFoodSchema>;
+
+export const createMealSchema = z
+  .object({
+    mealType,
+    consumedOn: pastIsoDate.optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  .strict();
+export type CreateMealInput = z.infer<typeof createMealSchema>;
+
+/** Add a food to a meal. The backend resolves food_id -> per-100g nutrition
+ *  (subject to RLS), scales by quantity and stores the snapshot itself. The
+ *  client never sends the resulting calories/macros. */
+export const addMealItemSchema = z
+  .object({
+    mealId: z.string().uuid(),
+    foodId: z.string().uuid(),
+    quantityG: z.number().positive().max(20000),
+    servingLabel: z.string().trim().max(80).optional(),
+  })
+  .strict();
+export type AddMealItemInput = z.infer<typeof addMealItemSchema>;
+
+/** Query param schema for day-scoped reads (Dashboard, meals list). */
+export const dayQuerySchema = z
+  .object({ date: pastIsoDate.optional() })
+  .strict();

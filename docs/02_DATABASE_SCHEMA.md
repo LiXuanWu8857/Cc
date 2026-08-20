@@ -92,8 +92,77 @@ Append-only。RLS 開啟且無一般角色 policy（deny-by-default）；`revoke
 
 寫入僅經 `log_audit_event(...)`（SECURITY DEFINER，`grant execute ... to authenticated`）。
 
+## 0005 — foods · food_nutrition · food_barcodes （Public，受控寫入）
+
+食品目錄有兩種可見性等級並存（§4.6、§4.13）：
+
+- **官方（official）**：`owner_user_id IS NULL`、`is_official = true`。全員可讀，只有受控系統工作（service_role 繞過 RLS）可寫。
+- **使用者（user）**：`owner_user_id = 建立者`、`is_official = false`。僅建立者可讀寫；不可污染官方庫（§4.10）。
+
+### `foods`
+
+| 欄位 | 型別 | 說明 / 約束 |
+|---|---|---|
+| `id` | uuid PK | |
+| `owner_user_id` | uuid null | → auth.users；NULL ⟺ 官方食品 |
+| `is_official` | boolean | 預設 false |
+| `name` | text | `chk_name_present` |
+| `brand` | text | |
+| `source` | `food_source_t` | official / user_manual / barcode_import / scan_candidate |
+| `default_serving_g` | numeric(7,2) | `chk_default_serving`（0 < s ≤ 10000） |
+| `created_at` / `updated_at` | timestamptz | |
+| — | — | `chk_official_ownership`：official ⟺ 無 owner；user ⟺ 有 owner |
+
+Index：`idx_foods_owner`、`idx_foods_official`（partial）、`idx_foods_name_lower`。
+**RLS**：`select` 官方或本人；`insert/update/delete` 僅本人非官方（`WITH CHECK owner = auth.uid() AND is_official = false`）—— 阻止建立官方食品或指派給他人。
+
+### `food_nutrition` （每 100g 正規基準，1:1 於 foods）
+
+`calories_kcal` / `protein_g` / `fat_g` / `carbs_g`（not null）+ 選填 `fiber_g` / `sugar_g` / `sodium_mg`。皆非負且有上限 CHECK。serving 換算由後端固定函式做（§4.11），不存多基準。
+**RLS**：可見性鏡射父 food；寫入僅本人非官方食品。
+
+### `food_barcodes`
+
+`barcode text`（`chk_barcode_format` = `^[0-9]{8,14}$`）→ `food_id`。`uq_food_barcode(food_id, barcode)`、`idx_food_barcodes_barcode`。
+**RLS**：可見性鏡射父 food；寫入僅本人非官方食品。
+
+## 0006 — meals · meal_items （Personal）
+
+### `meals`
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid | → auth.users |
+| `meal_type` | `meal_type_t` | breakfast / lunch / dinner / snack |
+| `consumed_on` | date | 歸屬日（Dashboard 分組用）；`chk_consumed_on_sane` |
+| `consumed_at` | timestamptz | 實際時間 |
+| `note` | text | |
+
+Index：`idx_meals_user_day (user_id, consumed_on desc, meal_type)`。**RLS**：四 policy，本人。
+
+### `meal_items` （營養快照 §2.2）
+
+當次 insert 時就把識別與營養**快照**寫死，日後食品變更/刪除不改寫歷史。
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `meal_id` | uuid | → meals on delete cascade |
+| `user_id` | uuid | 反正規化 owner（RLS 用） |
+| `food_id` | uuid null | → foods on delete **set null**（保留快照） |
+| `food_name` | text | 快照 |
+| `quantity_g` | numeric(7,2) | `chk_mi_qty`（0 < q ≤ 20000） |
+| `serving_label` | text | |
+| `calories_kcal` / `protein_g` / `fat_g` / `carbs_g` | numeric | 已換算的當次快照，非負 |
+
+**RLS**：`select/delete` 本人；`insert/update` `WITH CHECK` 額外要求 `meal_id` 屬於本人（子查詢 `exists meals`）—— 阻止把 item 掛到他人餐點（TM #1/#3）。
+
+## 0007 — 函式
+
+- `create_user_food(...)`：SECURITY **INVOKER**，單一交易內建立 food + food_nutrition + 選填 barcode，避免孤兒；RLS 照常套用（不能寫官方或他人）。
+
 ## TODO（後續階段）
 
-- **Phase 3**：`foods`、`food_nutrition`、`food_barcodes`、`meals`、`meal_items`（含營養快照）。
 - **Phase 4**：`expenses`、`expense_categories`、`food_purchases`。
 - **Phase 5**：`scan_records`、Storage bucket 與 OCR/AI 候選資料流。
