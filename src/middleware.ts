@@ -32,7 +32,30 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Page-level gating. API routes enforce their own 401 (and return JSON, so
+  // they must never be redirected). Unauthenticated page views go to /login;
+  // an authenticated user hitting /login is sent home.
+  const path = request.nextUrl.pathname;
+  const isApi = path.startsWith("/api");
+  const isPublic = path === "/login";
+
+  if (!isApi && !user && !isPublic) {
+    const to = request.nextUrl.clone();
+    to.pathname = "/login";
+    to.searchParams.set("next", path);
+    return NextResponse.redirect(to);
+  }
+  if (!isApi && user && isPublic) {
+    const to = request.nextUrl.clone();
+    to.pathname = "/dashboard";
+    to.search = "";
+    return NextResponse.redirect(to);
+  }
+
   return response;
 }
 

@@ -4,7 +4,11 @@
 
 > 核心 Loop：`掃條碼／拍營養標示 → 選份量 → 加入某一餐 → 熱量更新 → 支出完成`
 
-## 目前狀態：Phase 5（掃描 → OCR/AI 候選 → 確認；供應商可抽換，尚未接入）
+## 目前狀態：免費版 MVP（前端 + 後端可操作）
+
+前端已完成免費版（登入 → 目標 → Dashboard → 條碼/搜尋/手動加入餐點 → 記帳），詳見下方「前端」。以下為完整後端能力：
+
+### Phase 5（掃描 → OCR/AI 候選 → 確認；供應商可抽換，尚未接入）
 
 已完成的後端：
 
@@ -24,6 +28,24 @@
 - **後端固定計算與安全函式**（`src/lib/`）：BMR/TDEE/巨量營養素、營養驗證（熱量交叉檢查）、serving 換算、成本比率、影像上傳驗證（magic bytes/尺寸/圖片炸彈），含單元測試（27 passing）。
 
 > **OCR/AI 供應商尚未接入**：`src/lib/ocr/provider.ts` 與 `src/lib/ai/nutritionParser.ts` 是可抽換介面。`process` 端點在供應商接上前回 501 並退還已預留的預算。接入方式見下方 Roadmap。
+
+### 前端（免費版 MVP，已完成）
+
+Next.js App Router 頁面，走既有 API（cookie session + RLS），行動裝置優先：
+
+| 路由 | 內容 |
+|---|---|
+| `/login` | Supabase Auth 登入／註冊 |
+| `/onboarding` | 個人資料 + 體重 → 算每日目標 |
+| `/dashboard` | 當日熱量/三大營養素進度、各餐、支出 |
+| `/add` | 加入食物：**條碼掃描**（瀏覽器原生 `BarcodeDetector`，零相依）／搜尋／手動；查不到自動走 OpenFoodFacts 候選 → 確認 → 選餐別份量 |
+| `/expenses` | 記一筆支出 + 當月清單、分類 |
+
+- 頁面守衛在 `src/middleware.ts`：未登入導向 `/login`，API 維持自身 401。
+- 只有公開 anon key 進瀏覽器；所有資料存取經後端 API（§4.3）。
+- 相機掃描在裝置端進行，影像不上傳；不支援 `BarcodeDetector` 的瀏覽器自動退回手動輸入。
+
+> **要實際跑起來需一個 Supabase 專案**：把 URL / anon key 填入 `.env.local`（見 `.env.example`），套用 `supabase/migrations`，即可 `npm run dev`。
 
 ### 免費版掃描（已接入，$0）
 
