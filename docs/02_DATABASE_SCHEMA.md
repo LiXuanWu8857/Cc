@@ -162,7 +162,48 @@ Index：`idx_meals_user_day (user_id, consumed_on desc, meal_type)`。**RLS**：
 
 - `create_user_food(...)`：SECURITY **INVOKER**，單一交易內建立 food + food_nutrition + 選填 barcode，避免孤兒；RLS 照常套用（不能寫官方或他人）。
 
+## 0008 — expense_categories · expenses （Personal）
+
+### `expense_categories`
+`id`、`user_id`、`name`（`chk_cat_name`）。`uq_expense_categories_user_name(user_id, lower(name))` —— 每人分類名唯一。**RLS**：四 policy，本人。
+
+### `expenses`
+
+| 欄位 | 型別 | 說明 / 約束 |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid | → auth.users |
+| `spent_on` | date | `chk_spent_on_sane` |
+| `amount` | numeric(12,2) | `chk_amount`（0 < a ≤ 1e9） |
+| `currency` | char(3) | 預設 `TWD`；`chk_currency` = `^[A-Z]{3}$` |
+| `category_id` | uuid null | → expense_categories on delete set null |
+| `merchant` / `note` | text | |
+| `receipt_object_path` | text | **僅** Private-Storage 物件路徑（Phase 5 產生）；不存 URL/圖檔（§4.13） |
+| `created_at` / `updated_at` | timestamptz | |
+
+Index：`idx_expenses_user_day`、`idx_expenses_category`。
+**RLS**：`select/delete` 本人；`insert/update` `WITH CHECK` 額外要求 `category_id` 為 null 或屬本人分類（阻止連到他人分類，TM #2）。
+
+## 0009 — food_purchases （Personal）
+
+連結食品與支出以做成本分析。購買當下**快照**該數量的營養總量（§2.2），成本比率由後端計算不入庫。
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid | → auth.users |
+| `expense_id` | uuid null | → expenses on delete set null |
+| `food_id` | uuid null | → foods on delete set null |
+| `purchased_on` | date | |
+| `quantity_g` | numeric(9,2) | `chk_fp_qty`（>0） |
+| `price` | numeric(12,2) | `chk_fp_price`（>0） |
+| `currency` | char(3) | `chk_fp_currency` |
+| `total_calories_kcal` | numeric(10,2) null | 購買量的熱量快照 |
+| `total_protein_g` | numeric(9,2) null | 購買量的蛋白質快照 |
+
+Index：`idx_food_purchases_user_day`、`idx_food_purchases_food`。
+**RLS**：`select/delete` 本人；`insert/update` `WITH CHECK` 額外要求 linked `expense_id` 屬本人、linked `food_id` 本人可見（官方或自有）。
+
 ## TODO（後續階段）
 
-- **Phase 4**：`expenses`、`expense_categories`、`food_purchases`。
 - **Phase 5**：`scan_records`、Storage bucket 與 OCR/AI 候選資料流。

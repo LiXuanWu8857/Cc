@@ -72,9 +72,9 @@ Request → Rate Limit → Authentication → Schema Validation
 
 | 等級 | 本 repo 範例 | 規則 |
 |---|---|---|
-| Public | （Phase 3）foods、barcodes | 僅公開讀取；受控寫入 |
-| Personal | `user_profiles`、`nutrition_targets` | per-user RLS、最小回應 |
-| Sensitive | `body_metrics`（體重／體脂） | RLS、避免寫入 log、最小回應 |
+| Public | `foods`、`food_barcodes`、`food_nutrition`（官方） | 僅公開讀取；受控寫入 |
+| Personal | `user_profiles`、`nutrition_targets`、`meals`、`meal_items`、`expenses`、`food_purchases` | per-user RLS、最小回應 |
+| Sensitive | `body_metrics`（體重／體脂）、收據影像（`receipt_object_path`） | RLS、Private Storage、避免寫入 log、最小回應 |
 | Secret | service key、DB URL、JWT secret | 僅 server env；`.gitignore` 排除 `.env*` |
 
 ## 6. Threat Model → 控制 → 測試（節錄，對映交接文件 §5 的 25 項）

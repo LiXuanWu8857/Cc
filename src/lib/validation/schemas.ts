@@ -137,3 +137,41 @@ export type AddMealItemInput = z.infer<typeof addMealItemSchema>;
 export const dayQuerySchema = z
   .object({ date: pastIsoDate.optional() })
   .strict();
+
+// ---------------------------------------------------------------------------
+// Phase 4 — expenses & food purchases
+// ---------------------------------------------------------------------------
+
+const currency = z.string().regex(/^[A-Z]{3}$/, "Currency must be a 3-letter ISO code");
+const money = z.number().positive().max(1_000_000_000);
+
+export const createExpenseCategorySchema = z
+  .object({ name: z.string().trim().min(1).max(60) })
+  .strict();
+export type CreateExpenseCategoryInput = z.infer<typeof createExpenseCategorySchema>;
+
+export const createExpenseSchema = z
+  .object({
+    amount: money,
+    currency: currency.optional(),
+    spentOn: pastIsoDate.optional(),
+    categoryId: z.string().uuid().optional(),
+    merchant: z.string().trim().max(120).optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  .strict();
+export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+
+/** Record a food purchase. If a food is linked, the backend snapshots the
+ *  purchased quantity's nutrition; cost ratios are derived, never sent. */
+export const createFoodPurchaseSchema = z
+  .object({
+    quantityG: z.number().positive().max(1_000_000),
+    price: money,
+    currency: currency.optional(),
+    purchasedOn: pastIsoDate.optional(),
+    foodId: z.string().uuid().optional(),
+    expenseId: z.string().uuid().optional(),
+  })
+  .strict();
+export type CreateFoodPurchaseInput = z.infer<typeof createFoodPurchaseSchema>;

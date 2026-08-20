@@ -161,7 +161,36 @@ Phase 2 的寫入為 upsert（profile）或天然單筆 append（body_metric）/
 
 ---
 
+## Phase 4 — 支出與成本分析
+
+### `GET/POST /api/expense-categories`
+- **Actor**：`USER`。GET 回本人分類。POST（`createExpenseCategorySchema`）：`{ name }`；名稱重複 → 409（unique）。**Audit**：`expense_category.create`。
+
+### `GET /api/expenses?from=&to=`
+- **Actor**：`USER`。預設當月。RLS 限本人。
+- **Response 200**：`{ from, to, expenses:[...], totalsByCurrency:{TWD:..} }`（依幣別分開加總）。
+
+### `POST /api/expenses`
+- **Actor**：`USER`。**Request（`createExpenseSchema`, strict）**：`{ amount, currency?, spentOn?, categoryId?, merchant?, note? }`。
+- **Authorization**：RLS `WITH CHECK` 確認 `categoryId`（若有）屬本人；未知分類 → 422/policy 錯誤。
+- **Response 201**：`{ id }`。**Audit**：`expense.create`。**Rate**：write。
+
+### `POST /api/food-purchases`
+- **Actor**：`USER`。**Request（`createFoodPurchaseSchema`, strict）**：`{ quantityG, price, currency?, purchasedOn?, foodId?, expenseId? }`。
+  **不接受** 成本比率或營養總量。
+- **語意**：若連結 `foodId`（本人可見），後端讀 `food_nutrition` 依 `quantityG` 換算，**快照** `total_calories_kcal` / `total_protein_g`。RLS `WITH CHECK` 確認 linked expense/food 歸屬。
+- **Response 201**：`{ id, cost:{ costPer100Kcal, costPer10gProtein } }`（成本後端計算）。**Audit**：`food_purchase.create`。
+
+### `GET /api/food-purchases?from=&to=`
+- **Actor**：`USER`。預設當月。RLS 限本人。
+- **Response 200**：`{ from, to, purchases:[ { ..., cost:{ costPer100Kcal, costPer10gProtein } } ] }`（成本由 price + 快照營養即時計算，不入庫）。
+
+### `GET /api/dashboard`（更新）
+- `spending` 欄位已接上：`{ byCurrency:{TWD:..}, count }` —— 當日支出依幣別加總。
+
+---
+
 ## 待補（後續階段）
 
 - API 整合測試：未登入、過期 session、偽造 role/id、重放、跨帳號存取。
-- Phase 4+：expenses / food_purchases / scan endpoints，皆須補齊本文件對應章節與越權測試。
+- Phase 5：scan / upload / OCR / AI endpoints，皆須補齊本文件對應章節與越權測試。

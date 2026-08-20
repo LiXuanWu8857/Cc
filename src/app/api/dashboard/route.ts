@@ -64,14 +64,24 @@ export const GET = withPipeline({}, async ({ req, db }) => {
       }
     : null;
 
+  // Day's food spending, summed per currency (RLS-scoped to the caller).
+  const { data: expenses, error: expErr } = await db
+    .from("expenses")
+    .select("amount, currency")
+    .eq("spent_on", date);
+  if (expErr) throw expErr;
+  const spendingByCurrency: Record<string, number> = {};
+  for (const e of expenses ?? []) {
+    spendingByCurrency[e.currency] = round1((spendingByCurrency[e.currency] ?? 0) + Number(e.amount));
+  }
+
   return NextResponse.json({
     date,
     totals,
     perMeal,
     target: target ?? null,
     progress,
-    // Expenses summary placeholder until Phase 4.
-    spending: null,
+    spending: { byCurrency: spendingByCurrency, count: expenses?.length ?? 0 },
   });
 });
 
