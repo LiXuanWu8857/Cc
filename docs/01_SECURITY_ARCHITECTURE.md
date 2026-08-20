@@ -16,8 +16,8 @@
 | 05 | DB 再防一次 | 每張個人表啟用 RLS + `WITH CHECK` + CHECK constraints。 |
 | 06 | 最小權限 | 預設用 RLS-bound client（`createRlsClient`）；`service_role` 隔離於 `admin.ts` + `server-only`。 |
 | 07 | Secrets 永不進瀏覽器 | 只有 `NEXT_PUBLIC_*` 兩個公開值；service key / DB URL 只在 server env（`.env.example` 標註）。 |
-| 08 | AI 不是可信來源 | （Phase 5）候選 → 驗證 → 使用者確認；目前尚未接入。 |
-| 09 | 上傳一律不可信 | （Phase 5）Private bucket + magic bytes + 尺寸限制；目前尚未接入。 |
+| 08 | AI 不是可信來源 | 候選存 `scan_records`；`validateNutritionPer100g` + 使用者 `confirm` 才建私有食品；provider 為可抽換介面（尚未接真實供應商）。 |
+| 09 | 上傳一律不可信 | Private bucket + storage RLS（uid 前綴）+ `validateImageBytes`（magic bytes/尺寸/大小）+ AI Cost Guard；OCR/AI server-only。 |
 | 10 | 安全可測試 | pgTAP 越權測試 `supabase/tests/`；calc 單元測試 `src/lib/nutrition/`。 |
 
 ## 2. Trust Boundary
@@ -87,10 +87,15 @@ Request → Rate Limit → Authentication → Schema Validation
 | 2 | IDOR 讀他人資料 | RLS `SELECT` policy | 同上：A 查不到 B 的 body_metrics |
 | 3 | IDOR 改／刪他人資料 | RLS `UPDATE/DELETE` policy | 同上：A 的 update/delete 影響 0 列 |
 | 9 | Mass assignment | zod `.strict()` 白名單 | （API 整合測試，後續補） |
-| 19 | AI/使用者食品污染官方庫 | official 食品 RLS 禁一般使用者寫；候選為私有 user food | `0002_rls_foods_meals.test.sql`：A 無法建立 official／他人食品 |
+| 13 | 猜測私有 Storage path | UUID 路徑、private bucket、storage RLS（uid 前綴）、後端簽 URL | `0012_storage.sql` |
+| 14 | 使用者指定他人 Storage path | 路徑後端生成（`scanObjectPath`）、storage RLS owner 前綴 | `0012_storage.sql` |
+| 15 | 惡意檔/偽 MIME/圖片炸彈 | magic bytes、尺寸/大小上限、拒 SVG/HTML/未知格式 | `validateImage.test.ts` |
+| 18 | Prompt injection 影響 AI | OCR/圖片文字視為不可信資料；固定候選 schema；provider 無授權工具 | provider 介面契約（`ocr/provider.ts`、`ai/nutritionParser.ts`） |
+| 19 | AI/使用者食品污染官方庫 | official 食品 RLS 禁一般使用者寫；候選為私有 user food、須使用者確認 | `0002_rls_foods_meals.test.sql`、`0004_rls_scans.test.sql` |
 | 20 | 營養單位/計算操弄 | 後端固定函式重算與換算，client 不傳衍生值；熱量交叉驗證 | `calc.test.ts`、`validate.test.ts` |
+| 21 | AI/OCR 成本濫用 | 呼叫前原子預算保留（`reserve_ai_budget`）、對帳、每人每日配額 | `0004_rls_scans.test.sql`：第三次超額被拒 |
 
-待後續階段涵蓋：#4–8、#10–18、#21–25（Auth 強化、Storage、OCR/AI、Cost Guard 等）。
+待後續階段涵蓋：#4–8、#10–12、#16–17、#22–25（Auth 強化、下載 URL TTL、供應鏈、DoS 深化等，多屬部署層與供應商接入）。
 
 ## 7. Security Testing（§4.15 / 交接指示 4）
 

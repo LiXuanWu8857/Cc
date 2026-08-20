@@ -204,6 +204,41 @@ Index：`idx_expenses_user_day`、`idx_expenses_category`。
 Index：`idx_food_purchases_user_day`、`idx_food_purchases_food`。
 **RLS**：`select/delete` 本人；`insert/update` `WITH CHECK` 額外要求 linked `expense_id` 屬本人、linked `food_id` 本人可見（官方或自有）。
 
-## TODO（後續階段）
+## 0010 — scan_records （Personal）
 
-- **Phase 5**：`scan_records`、Storage bucket 與 OCR/AI 候選資料流。
+追蹤影像掃描生命週期：上傳 → OCR → AI parse → **候選** → 驗證 → 使用者確認（§3、§4.10）。AI/OCR 輸出存為 `candidate`（jsonb），**不是** truth，須經後端驗證與使用者確認才可成為私有 user food，永不自動寫官方庫。
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid | → auth.users |
+| `kind` | `scan_kind_t` | nutrition_label / receipt |
+| `status` | `scan_status_t` | awaiting_upload / uploaded / processing / parsed / needs_review / confirmed / rejected / failed |
+| `object_path` | text | **後端生成** 私有路徑；`uq_scan_object_path` |
+| `candidate` | jsonb | AI/OCR 結構化候選（非 truth） |
+| `confidence` | numeric(4,3) | `chk_confidence`（0–1） |
+| `validation_errors` | jsonb | 後端驗證問題 |
+| `confirmed_food_id` | uuid null | → foods（確認後產生的私有食品） |
+| `provider` / `ocr_cost` / `ai_cost` / `error_code` | | 來源與成本（無祕密、無原圖） |
+
+**RLS**：四 policy，本人。
+
+## 0011 — AI Cost Guard （§4.12）
+
+### `ai_cost_budget`
+`(user_id, usage_date)` PK、`requests`、`est_cost`。**RLS**：僅本人 `SELECT`；寫入只經下列函式。
+
+### 函式
+- `reserve_ai_budget(max_requests, max_cost, req_cost) → boolean`：SECURITY DEFINER，單一 locked UPDATE 內**原子**檢查並保留預算（呼叫 provider 之前）；超額回 false。只動 `auth.uid()` 自己的列。
+- `settle_ai_cost(actual, reserved)`：呼叫後對帳實際成本（不 gate 請求）。
+
+## 0012 — Private Storage （§4.8）
+
+- 單一**私有** bucket `scans`（`public = false`）。
+- `storage.objects` 的 RLS：`authenticated` 只能存取 `name` 前綴 = 自己 uid 的物件（`(storage.foldername(name))[1] = auth.uid()::text`）——縱深防禦，即使用 anon key 也只能碰自己路徑。
+- 路徑由後端生成（`<uid>/<kind>/<uuid>`）；下載用後端簽發的短效 signed URL；bucket 永不公開。
+
+## TODO（後續增強）
+
+- WebP/HEIC 正規化（需 decode 函式庫，如 sharp）與上傳後重編碼/移除 metadata。
+- 官方食品受審核匯入流程（service_role 專用管道）。

@@ -190,7 +190,32 @@ Phase 2 的寫入為 upsert（profile）或天然單筆 append（body_metric）/
 
 ---
 
+## Phase 5 — 掃描（影像 → OCR → AI 候選 → 確認）
+
+> OCR/AI 供應商**尚未設定**（可抽換介面預留）。`process` 在供應商接上前回 501 並退還已預留的預算。
+
+### `POST /api/scans`
+- **Actor**：`USER`。**Request（`createScanSchema`）**：`{ kind: nutrition_label|receipt }`。
+- **語意**：後端生成私有 `object_path`（client 不可指定，§4.8），建立 `scan_records`，回短效 **signed upload URL**；storage RLS 另限制上傳到本人 uid 前綴。
+- **Response 201**：`{ scanId, upload:{ bucket, path, signedUrl, token } }`。**Audit**：`scan.create`。
+
+### `GET /api/scans` / `GET /api/scans/:id`
+- **Actor**：`USER`。RLS 限本人。回掃描狀態、候選、驗證問題；非本人 → 404。
+
+### `POST /api/scans/:id/process`
+- **Actor**：`USER`。**管線順序**：載入（RLS）→ **原子預留 AI 預算**（超額 → 429，未呼叫任何 provider）→ 讀私有圖 → `validateImageBytes`（magic bytes/尺寸/大小，§4.8）→ OCR → AI parse → 候選經 `validateNutritionPer100g`。
+- **候選只存不自動升級為食品**（§4.10）。
+- **目前**：供應商未設定 → **501**（`not_implemented`），並 `settle_ai_cost(0)` 退還預留。
+- **Audit**：`scan.process`。
+
+### `POST /api/scans/:id/confirm`
+- **Actor**：`USER`。**Request（`confirmScanSchema`）**：使用者最終確認/修正的候選（`{ name, brand?, barcode?, defaultServingG?, nutritionPer100g }`）。
+- **語意**：**人在迴路** —— 唯有使用者確認才經 `validateNutritionPer100g` + `create_user_food` 建立**私有**食品並連結 `confirmed_food_id`；AI 永不自行寫食品資料。
+- **Response 201**：`{ scanId, foodId, status:"confirmed" }`。**Audit**：`scan.confirm`。
+
+---
+
 ## 待補（後續階段）
 
-- API 整合測試：未登入、過期 session、偽造 role/id、重放、跨帳號存取。
-- Phase 5：scan / upload / OCR / AI endpoints，皆須補齊本文件對應章節與越權測試。
+- 接上實際 OCR/AI 供應商（實作 `OcrProvider` / `NutritionParser`，金鑰只在 server env）。
+- API 整合測試：未登入、過期 session、偽造 role/id、重放、跨帳號存取、prompt injection。

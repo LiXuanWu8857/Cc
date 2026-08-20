@@ -175,3 +175,29 @@ export const createFoodPurchaseSchema = z
   })
   .strict();
 export type CreateFoodPurchaseInput = z.infer<typeof createFoodPurchaseSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 5 — scans (image -> OCR -> AI candidate -> confirmation)
+// ---------------------------------------------------------------------------
+
+export const scanKind = z.enum(["nutrition_label", "receipt"]);
+
+export const createScanSchema = z.object({ kind: scanKind }).strict();
+export type CreateScanInput = z.infer<typeof createScanSchema>;
+
+/**
+ * The user's FINAL, corrected nutrition candidate that they explicitly confirm
+ * (§4.10). Same shape as a manual food; on confirm it becomes a private user
+ * food. The AI candidate is only a suggestion — this is what the human signs
+ * off on.
+ */
+export const confirmScanSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    brand: z.string().trim().max(120).optional(),
+    barcode: barcode.optional(),
+    defaultServingG: z.number().positive().max(10000).optional(),
+    nutritionPer100g,
+  })
+  .strict();
+export type ConfirmScanInput = z.infer<typeof confirmScanSchema>;

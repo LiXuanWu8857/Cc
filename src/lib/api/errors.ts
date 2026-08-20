@@ -10,6 +10,7 @@ export const ErrorCode = {
   VALIDATION_FAILED: "validation_failed",
   NOT_FOUND: "not_found",
   CONFLICT: "conflict",
+  NOT_IMPLEMENTED: "not_implemented",
   INTERNAL: "internal_error",
 } as const;
 
@@ -22,6 +23,7 @@ const STATUS: Record<ErrorCode, number> = {
   [ErrorCode.VALIDATION_FAILED]: 422,
   [ErrorCode.NOT_FOUND]: 404,
   [ErrorCode.CONFLICT]: 409,
+  [ErrorCode.NOT_IMPLEMENTED]: 501,
   [ErrorCode.INTERNAL]: 500,
 };
 
@@ -60,5 +62,8 @@ export class ApiError extends Error {
   }
   static conflict(message = "Conflict") {
     return new ApiError(ErrorCode.CONFLICT, message);
+  }
+  static notImplemented(message = "Not implemented") {
+    return new ApiError(ErrorCode.NOT_IMPLEMENTED, message);
   }
 }
