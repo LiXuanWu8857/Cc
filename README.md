@@ -25,6 +25,12 @@
 
 > **OCR/AI 供應商尚未接入**：`src/lib/ocr/provider.ts` 與 `src/lib/ai/nutritionParser.ts` 是可抽換介面。`process` 端點在供應商接上前回 501 並退還已預留的預算。接入方式見下方 Roadmap。
 
+### 免費版掃描（已接入，$0）
+
+- **條碼 → 營養**：`GET /api/foods/barcode/[barcode]` 本地查不到時，自動查 **OpenFoodFacts**（免費、開放資料）。外部資料只回**候選**、不寫入；使用者經 `POST /api/foods` 確認後才建立（後端二次驗證）。provider 可抽換（`src/lib/foods/openFoodFacts.ts`）。
+- **營養標示 OCR**：走**瀏覽器端 Tesseract.js**（前端，尚待前端實作）——影像不上傳伺服器、零 AI 成本；辨識出的候選一樣打 `POST /api/foods` 確認建立。後端不需新增端點。
+- 之後要升級到 AI 付費版：只需實作 `OcrProvider` / `NutritionParser` 並設定金鑰，`process` 端點自動生效，**其餘程式與資料不動**（見下方 Roadmap）。
+
 ## 規格文件（先 spec 再 code）
 
 | 文件 | 內容 |

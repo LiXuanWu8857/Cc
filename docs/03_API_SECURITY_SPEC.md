@@ -131,9 +131,13 @@ Phase 2 的寫入為 upsert（profile）或天然單筆 append（body_metric）/
 - **Response 201**：`{ "id": "uuid" }`。**Audit**：`food.create`。**Rate**：write。
 
 ### `GET /api/foods/barcode/:barcode`
-- **Actor**：`USER`。**Request**：path `barcode`（8–14 位數，否則 422）。
-- **Authorization**：RLS 限官方 + 本人；查無 → 404（絕不回他人資料）。
-- **Response 200**：`{ "match": { barcode, foods:{ ... , food_nutrition:{...} } } }`。
+- **Actor**：`USER`。**Request**：path `barcode`（8–14 位數，否則 422）；query `external=0` 可關閉外部查詢。
+- **順序**：(1) 本地目錄（RLS 限官方 + 本人）；(2) 查無 → **OpenFoodFacts**（免費）。
+- **外部資料為候選，不寫入**（§4.10）：回傳候選供前端預填，使用者確認後才經 `POST /api/foods` 建立（後端二次驗證）。OpenFoodFacts 為不可信社群資料，fail-soft（網路錯誤/查無 → 404，不 500）。
+- **Response 200**：
+  - 本地命中：`{ "source":"local", "match":{ barcode, foods:{ ..., food_nutrition:{...} } } }`
+  - 外部命中：`{ "source":"openfoodfacts", "candidate":{ name, brand?, barcode, defaultServingG?, nutritionPer100g:{...}, warnings:[...] } }`（`warnings` 為熱量交叉檢查等提示，供 UI 標示；使用者確認時仍會二次驗證）
+- **Provider 可抽換**：`src/lib/foods/openFoodFacts.ts`；換付費條碼庫只需換此 provider。
 
 ### `POST /api/meals`
 - **Actor**：`USER`。**Request（`createMealSchema`, strict）**：`{ mealType, consumedOn?, note? }`。

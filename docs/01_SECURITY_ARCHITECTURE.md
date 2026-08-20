@@ -94,6 +94,7 @@ Request → Rate Limit → Authentication → Schema Validation
 | 19 | AI/使用者食品污染官方庫 | official 食品 RLS 禁一般使用者寫；候選為私有 user food、須使用者確認 | `0002_rls_foods_meals.test.sql`、`0004_rls_scans.test.sql` |
 | 20 | 營養單位/計算操弄 | 後端固定函式重算與換算，client 不傳衍生值；熱量交叉驗證 | `calc.test.ts`、`validate.test.ts` |
 | 21 | AI/OCR 成本濫用 | 呼叫前原子預算保留（`reserve_ai_budget`）、對帳、每人每日配額 | `0004_rls_scans.test.sql`：第三次超額被拒 |
+| 25 | 第三方食品資料（OpenFoodFacts）供應鏈風險 | 視為不可信、僅回候選不寫入、後端二次驗證、fail-soft（timeout/錯誤→404）、provider 可抽換 | `openFoodFacts.test.ts`：映射/缺欄位/交叉檢查 |
 
 待後續階段涵蓋：#4–8、#10–12、#16–17、#22–25（Auth 強化、下載 URL TTL、供應鏈、DoS 深化等，多屬部署層與供應商接入）。
 
