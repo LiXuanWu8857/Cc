@@ -1,32 +1,39 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { api, ApiError, type DashboardResp } from "@/lib/client/api";
-import { getBrowserSupabase } from "@/lib/supabase/client";
 
 const MEALS: [string, string][] = [
   ["breakfast", "早餐"], ["lunch", "午餐"], ["dinner", "晚餐"], ["snack", "點心"],
 ];
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface MetricsResp {
+  metrics: { measured_at: string; weight_kg: number | null }[];
+}
+
 export default function Dashboard() {
-  const router = useRouter();
   const [data, setData] = useState<DashboardResp | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [weeklyDue, setWeeklyDue] = useState(false);
 
   useEffect(() => {
     api.get<DashboardResp>("/api/dashboard")
       .then(setData)
       .catch((e) => setErr(e instanceof ApiError ? e.message : "載入失敗"))
       .finally(() => setLoading(false));
-  }, []);
 
-  async function logout() {
-    await getBrowserSupabase().auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
+    // Weekly re-entry prompt: due when no body metric in the last 7 days.
+    api.get<MetricsResp>("/api/body-metrics")
+      .then((m) => {
+        const latest = m.metrics?.[0];
+        const due = !latest || Date.now() - new Date(latest.measured_at).getTime() > WEEK_MS;
+        setWeeklyDue(due);
+      })
+      .catch(() => {});
+  }, []);
 
   const t = data?.totals;
   const target = data?.target;
@@ -37,13 +44,20 @@ export default function Dashboard() {
 
   return (
     <main className="app">
-      <div className="spread page-head">
-        <div>
-          <p className="eyebrow">{data?.date ?? "今日"}</p>
-          <h1>今日總覽</h1>
-        </div>
-        <button className="btn btn-ghost btn-sm" onClick={logout}>登出</button>
+      <div className="page-head">
+        <p className="eyebrow">{data?.date ?? "今日"}</p>
+        <h1>今日總覽</h1>
       </div>
+
+      {weeklyDue && (
+        <Link href="/checkin" className="banner">
+          <div>
+            <div className="banner-t">本週還沒更新身體數據</div>
+            <div className="banner-s">花 10 秒輸入體重，讓每日目標保持準確</div>
+          </div>
+          <span className="banner-cta">前往 →</span>
+        </Link>
+      )}
 
       {err && <div className="err">{err}</div>}
       {loading && <div className="empty">載入中…</div>}

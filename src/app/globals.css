@@ -189,4 +189,60 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0
 .mono { font-family: var(--font-mono); }
 .scanbox { width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
 .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* top-right hamburger menu */
+.menu-btn {
+  position: fixed; z-index: 60;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: max(12px, calc(50vw - 268px));
+  width: 40px; height: 40px; border-radius: 11px;
+  display: grid; place-items: center; cursor: pointer;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+.menu-btn svg { width: 22px; height: 22px; }
+.menu-btn:active { transform: translateY(1px); }
+
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; justify-content: flex-end;
+  animation: fade 0.15s ease;
+}
+.drawer {
+  width: min(320px, 86vw); height: 100%;
+  background: var(--surface); border-left: 1px solid var(--border);
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  display: flex; flex-direction: column; gap: 6px;
+  animation: slidein 0.18s ease;
+}
+@keyframes fade { from { opacity: 0; } }
+@keyframes slidein { from { transform: translateX(16px); opacity: 0.6; } }
+
+.drawer-head { display: flex; align-items: center; gap: 12px; padding: 4px 4px 16px; border-bottom: 1px solid var(--border); }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; font-weight: 700; font-size: 17px;
+}
+.drawer-name { font-size: 12px; color: var(--muted); }
+.drawer-email { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drawer-x { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 6px; }
+
+.drawer-nav { display: flex; flex-direction: column; padding: 8px 0; gap: 2px; }
+.drawer-nav a { padding: 13px 10px; border-radius: 10px; font-size: 15px; font-weight: 500; }
+.drawer-nav a:hover { background: var(--surface-2); }
+.drawer-foot { margin-top: auto; }
+
+/* weekly re-entry banner */
+.banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+}
+.banner-t { font-weight: 600; font-size: 14.5px; color: var(--ink); }
+.banner-s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.banner-cta { color: var(--accent); font-weight: 600; font-size: 14px; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
