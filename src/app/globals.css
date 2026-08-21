@@ -19,6 +19,10 @@
   --good: #0e8a78;
   --shadow: 0 1px 2px rgba(27, 34, 30, 0.05), 0 8px 24px -14px rgba(27, 34, 30, 0.2);
   --radius: 14px;
+  /* iPhone/Mac render PingFang natively; other platforms fall back cleanly. */
+  --font-sans: "PingFang TC", "PingFang SC", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -62,12 +66,12 @@ html, body { padding: 0; margin: 0; }
 body {
   background: var(--ground);
   color: var(--ink);
-  font-family: "IBM Plex Sans", system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
-h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.01em; }
 
 /* layout shell */
 .app {
@@ -78,7 +82,7 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
 }
 .page-head { margin: 6px 0 20px; }
 .page-head .eyebrow {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
   margin: 0 0 6px;
 }
@@ -108,7 +112,7 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
 }
 .card + .card { margin-top: 14px; }
 .card-title { font-size: 13px; color: var(--muted); margin: 0 0 12px; font-weight: 600;
-  font-family: "IBM Plex Sans", sans-serif; letter-spacing: 0.02em; }
+  font-family: var(--font-sans); letter-spacing: 0.02em; }
 
 /* buttons */
 .btn {
@@ -149,10 +153,10 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
 .macro .bar { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: 8px 0 6px; }
 .macro .bar i { display: block; height: 100%; border-radius: 99px; }
 .macro .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.macro .v { font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 500; }
+.macro .v { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
 
 .kcal-big { display: flex; align-items: baseline; gap: 8px; }
-.kcal-big .n { font-family: "IBM Plex Mono", monospace; font-size: 40px; font-weight: 500; line-height: 1; }
+.kcal-big .n { font-family: var(--font-mono); font-size: 40px; font-weight: 500; line-height: 1; }
 .kcal-big .u { color: var(--muted); font-size: 14px; }
 .kcal-track { height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 12px; }
 .kcal-track i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
@@ -164,25 +168,25 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
 .list-row .main { flex: 1; min-width: 0; }
 .list-row .main .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-row .main .s { font-size: 12.5px; color: var(--muted); }
-.list-row .num { font-family: "IBM Plex Mono", monospace; font-size: 14px; text-align: right; white-space: nowrap; }
-.badge { display: inline-block; font-size: 10.5px; font-family: "IBM Plex Mono", monospace; padding: 2px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); letter-spacing: 0.03em; }
+.list-row .num { font-family: var(--font-mono); font-size: 14px; text-align: right; white-space: nowrap; }
+.badge { display: inline-block; font-size: 10.5px; font-family: var(--font-mono); padding: 2px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); letter-spacing: 0.03em; }
 .badge.gray { background: var(--surface-2); color: var(--muted); }
 .badge.warn { background: color-mix(in srgb, var(--fat) 16%, transparent); color: var(--fat); }
 
 .meal-block { margin-top: 16px; }
-.meal-block h3 { font-family: "IBM Plex Sans", sans-serif; font-size: 14px; font-weight: 600; margin: 0 0 2px; display: flex; justify-content: space-between; }
-.meal-block .subtotal { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-weight: 500; }
+.meal-block h3 { font-family: var(--font-sans); font-size: 14px; font-weight: 600; margin: 0 0 2px; display: flex; justify-content: space-between; }
+.meal-block .subtotal { color: var(--muted); font-family: var(--font-mono); font-weight: 500; }
 
 /* misc */
 .muted { color: var(--muted); }
 .center-narrow { max-width: 400px; margin: 8vh auto 0; padding: 0 20px; }
-.brand { font-family: "Fraunces", serif; font-weight: 600; font-size: 30px; }
+.brand { font-family: var(--font-sans); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; }
 .err { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
 .ok-note { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
 .empty { text-align: center; color: var(--muted); padding: 32px 12px; font-size: 14px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.mono { font-family: "IBM Plex Mono", monospace; }
+.mono { font-family: var(--font-mono); }
 .scanbox { width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
 .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
