@@ -5,8 +5,10 @@ import { MenuDrawer } from "@/components/MenuDrawer";
 import { WeeklyGate } from "@/components/WeeklyGate";
 
 export const metadata = {
-  title: "FoodTrack",
+  title: "食記",
   description: "飲食紀錄、營養分析與食品支出記帳。",
+  applicationName: "食記",
+  appleWebApp: { capable: true, title: "食記", statusBarStyle: "default" as const },
 };
 
 export const viewport = {

@@ -56,7 +56,7 @@ function Login() {
   return (
     <main className="center-narrow">
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div className="brand">FoodTrack</div>
+        <div className="brand">食記</div>
         <p className="muted" style={{ margin: "6px 0 0", fontSize: 14 }}>
           飲食紀錄 · 營養分析 · 食品記帳
         </p>
