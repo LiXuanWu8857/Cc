@@ -189,6 +189,15 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0
 .mono { font-family: var(--font-mono); }
 .scanbox { width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
 .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* food picker rows (search results) */
+.pick-row {
+  display: flex; width: 100%; text-align: left; align-items: center;
+  background: none; border: 0; padding: 10px 8px; border-radius: 8px;
+  cursor: pointer; color: var(--ink); font: inherit; font-size: 14px;
+}
+.pick-row:hover { background: var(--surface-2); }
+.pick-row + .pick-row { border-top: 1px solid var(--border); }
+
 /* top-right hamburger menu */
 .menu-btn {
   position: fixed; z-index: 60;

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 /** Bottom tab bar. Hidden on the auth screen. */
 export function TabBar() {
   const path = usePathname();
-  if (path === "/login" || path === "/onboarding") return null;
+  if (path === "/login" || path === "/onboarding" || path === "/checkin") return null;
 
   const tabs = [
     { href: "/dashboard", label: "今日", icon: IconHome },

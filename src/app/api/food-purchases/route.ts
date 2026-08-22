@@ -26,7 +26,7 @@ export const GET = withPipeline({}, async ({ req, db }) => {
 
   const { data, error } = await db
     .from("food_purchases")
-    .select("id, purchased_on, quantity_g, price, currency, food_id, expense_id, total_calories_kcal, total_protein_g")
+    .select("id, purchased_on, quantity_g, price, currency, food_id, expense_id, total_calories_kcal, total_protein_g, foods(name, brand)")
     .gte("purchased_on", from)
     .lte("purchased_on", to)
     .order("purchased_on", { ascending: false })

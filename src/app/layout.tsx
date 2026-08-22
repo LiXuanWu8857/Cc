@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { TabBar } from "@/components/TabBar";
 import { MenuDrawer } from "@/components/MenuDrawer";
+import { WeeklyGate } from "@/components/WeeklyGate";
 
 export const metadata = {
   title: "FoodTrack",
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-Hant">
       <body>
+        <WeeklyGate />
         <MenuDrawer />
         {children}
         <TabBar />

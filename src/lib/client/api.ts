@@ -79,3 +79,19 @@ export function foodNutrition(f: Food): FoodNutrition | null {
   if (!n) return null;
   return Array.isArray(n) ? n[0] ?? null : n;
 }
+
+export interface PurchaseCost { costPer100Kcal: number | null; costPer10gProtein: number | null }
+export interface FoodPurchase {
+  id: string; purchased_on: string; quantity_g: number; price: number; currency: string;
+  food_id: string | null; total_calories_kcal: number | null; total_protein_g: number | null;
+  foods: { name: string; brand: string | null } | { name: string; brand: string | null }[] | null;
+  cost: PurchaseCost;
+}
+export interface PurchasesResp { from: string; to: string; purchases: FoodPurchase[] }
+
+/** Name of the food linked to a purchase (relation may be object or array). */
+export function purchaseFoodName(p: FoodPurchase): string {
+  const f = p.foods;
+  const row = Array.isArray(f) ? f[0] : f;
+  return row?.name ?? "未連結食品";
+}

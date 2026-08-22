@@ -15,7 +15,7 @@ export function MenuDrawer() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
 
-  const hidden = path === "/login" || path === "/onboarding";
+  const hidden = path === "/login" || path === "/onboarding" || path === "/checkin";
 
   useEffect(() => {
     if (hidden) return;
@@ -68,6 +68,7 @@ export function MenuDrawer() {
               <Link href="/settings">個人資料</Link>
               <Link href="/checkin">每週更新數據</Link>
               <Link href="/expenses">食品支出</Link>
+              <Link href="/purchases">採購成本</Link>
             </nav>
 
             <div className="drawer-foot">

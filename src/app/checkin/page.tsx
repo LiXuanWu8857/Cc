@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/client/api";
 
@@ -7,12 +8,16 @@ interface MetricsResp {
   metrics: { measured_at: string; weight_kg: number | null }[];
 }
 
-/** Weekly check-in: re-enter body metrics so targets stay current. */
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Weekly check-in: re-enter body metrics so targets stay current. Enforced —
+ *  the WeeklyGate sends users here and the nav is hidden until they submit. */
 export default function CheckIn() {
   const router = useRouter();
   const [weightKg, setWeightKg] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [lastAt, setLastAt] = useState<string | null>(null);
+  const [due, setDue] = useState(true); // assume required until we learn otherwise
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -23,6 +28,7 @@ export default function CheckIn() {
         if (latest) {
           setLastAt(latest.measured_at.slice(0, 10));
           if (latest.weight_kg != null) setWeightKg(String(latest.weight_kg));
+          setDue(Date.now() - new Date(latest.measured_at).getTime() > WEEK_MS);
         }
       })
       .catch(() => {});
@@ -57,6 +63,12 @@ export default function CheckIn() {
 
       {err && <div className="err">{err}</div>}
 
+      {due && (
+        <div className="ok-note" style={{ background: "var(--accent-soft)" }}>
+          本週尚未更新身體數據，請先完成更新才能繼續使用。
+        </div>
+      )}
+
       <form onSubmit={submit} className="card">
         <p className="muted" style={{ marginTop: 0, fontSize: 14 }}>
           {lastAt ? `上次更新：${lastAt}。` : ""}每週重新輸入一次，讓熱量與營養目標貼近你目前的身體狀況。
@@ -74,6 +86,11 @@ export default function CheckIn() {
         <button className="btn btn-primary" disabled={busy} type="submit">
           {busy ? "更新中…" : "更新並重算目標"}
         </button>
+        {!due && (
+          <Link href="/dashboard" className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }}>
+            返回今日
+          </Link>
+        )}
       </form>
     </main>
   );
