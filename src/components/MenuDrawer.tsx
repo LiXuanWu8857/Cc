@@ -65,6 +65,7 @@ export function MenuDrawer() {
 
             <nav className="drawer-nav">
               <Link href="/dashboard">今日總覽</Link>
+              <Link href="/stats">體重趨勢</Link>
               <Link href="/settings">個人資料</Link>
               <Link href="/checkin">每週更新數據</Link>
               <Link href="/expenses">食品支出</Link>

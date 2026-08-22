@@ -10,6 +10,7 @@ export function TabBar() {
   const tabs = [
     { href: "/dashboard", label: "今日", icon: IconHome },
     { href: "/add", label: "加入", icon: IconPlus },
+    { href: "/stats", label: "趨勢", icon: IconChart },
     { href: "/expenses", label: "支出", icon: IconWallet },
   ];
 
@@ -41,6 +42,14 @@ function IconPlus() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <circle cx="12" cy="12" r="8.5" /><path d="M12 8.5v7M8.5 12h7" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconChart() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M4 19V5M4 19h16" strokeLinecap="round" />
+      <path d="M7 15l4-4 3 3 4-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

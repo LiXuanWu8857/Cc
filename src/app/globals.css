@@ -189,6 +189,48 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0
 .mono { font-family: var(--font-mono); }
 .scanbox { width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
 .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* stats: summary tiles */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat-k { font-size: 11px; color: var(--muted); }
+.stat-v { font-size: 20px; font-weight: 700; font-family: var(--font-mono); margin-top: 2px; }
+.stat-v.good { color: var(--good); }
+.stat-v.warn { color: var(--fat); }
+
+/* weight trend chart */
+.chart-wrap { position: relative; height: 190px; margin-top: 16px; }
+.chart-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.chart-dot {
+  position: absolute; width: 7px; height: 7px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: var(--surface);
+  border: 2px solid var(--accent); pointer-events: none;
+}
+.chart-dot.end, .chart-dot.on { background: var(--accent); }
+.chart-dot.on { width: 10px; height: 10px; }
+.chart-ylabels { position: absolute; inset: 0; pointer-events: none; }
+.chart-ylabels span {
+  position: absolute; left: 0; transform: translateY(-50%);
+  font-size: 10px; color: var(--muted); font-family: var(--font-mono);
+}
+.chart-hits { position: absolute; inset: 0; }
+.chart-hits button {
+  position: absolute; top: 0; height: 100%; transform: translateX(-50%);
+  background: none; border: 0; padding: 0; cursor: pointer;
+}
+.chart-tip {
+  position: absolute; top: -4px; transform: translateX(-50%);
+  background: var(--ink); color: var(--ground); border-radius: 8px;
+  padding: 5px 8px; font-size: 11px; pointer-events: none; white-space: nowrap; z-index: 3;
+  box-shadow: var(--shadow);
+}
+.chart-tip.left { transform: translateX(-90%); }
+.chart-tip-v { font-weight: 600; font-family: var(--font-mono); }
+.chart-tip-d { opacity: 0.75; font-size: 10px; }
+.chart-xlabels {
+  position: absolute; left: 9%; right: 4%; bottom: 0;
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--muted); font-family: var(--font-mono);
+}
+
 /* food picker rows (search results) */
 .pick-row {
   display: flex; width: 100%; text-align: left; align-items: center;
